@@ -22,4 +22,8 @@ Performance evolution factor for pipelined computer:
 ![image](https://github.com/user-attachments/assets/0673e380-c718-403a-b2fd-375e8dd47ccb)
 
 
+![TASK 3 OUTPUT WAVEFORM](https://github.com/user-attachments/assets/58de319c-6ff2-495b-a016-01900f8fdf12)
+
+
+
 
