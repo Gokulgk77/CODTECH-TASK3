@@ -1,0 +1,77 @@
+/* Pipelined Processor verilog code */
+
+module PipelinedProcessor (
+    input clk, reset,
+    output [7:0] result  // Final output result
+);
+
+    // Internal signals
+    reg [7:0] instruction_memory [0:15]; // Instruction memory
+    reg [7:0] data_memory [0:15];        // Data memory
+    reg [7:0] register_file [0:7];       // Register file
+
+    // Pipeline registers
+    reg [7:0] IF_ID_IR;                  // Instruction Register between IF and ID
+    reg [7:0] ID_EX_A, ID_EX_B, ID_EX_IR; // Between ID and EX
+    reg [7:0] EX_WB_ALU_OUT, EX_WB_IR;   // Between EX and WB
+
+    // Output result
+    assign result = EX_WB_ALU_OUT;
+
+    // Instruction Fetch (IF) Stage
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            IF_ID_IR <= 8'b0;
+        end else begin
+            IF_ID_IR <= instruction_memory[IF_ID_IR[7:4]]; // Fetch next instruction
+        end
+    end
+
+    // Instruction Decode (ID) Stage
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            ID_EX_IR <= 8'b0;
+            ID_EX_A <= 8'b0;
+            ID_EX_B <= 8'b0;
+        end else begin
+            ID_EX_IR <= IF_ID_IR; // Pass instruction
+            ID_EX_A <= register_file[IF_ID_IR[3:2]]; // Source 1
+            ID_EX_B <= register_file[IF_ID_IR[1:0]]; // Source 2
+        end
+    end
+
+    // Execute (EX) Stage
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            EX_WB_IR <= 8'b0;
+            EX_WB_ALU_OUT <= 8'b0;
+        end else begin
+            EX_WB_IR <= ID_EX_IR; // Pass instruction
+            case (ID_EX_IR[7:6]) // Opcode
+                2'b00: EX_WB_ALU_OUT <= ID_EX_A + ID_EX_B; // ADD
+                2'b01: EX_WB_ALU_OUT <= ID_EX_A - ID_EX_B; // SUB
+                2'b10: EX_WB_ALU_OUT <= data_memory[ID_EX_B]; // LOAD
+                default: EX_WB_ALU_OUT <= 8'b0; // NOP
+            endcase
+        end
+    end
+
+    // Write Back (WB) Stage
+    always @(posedge clk or posedge reset) begin
+        if (!reset && EX_WB_IR[7:6] != 2'b10) begin
+            register_file[EX_WB_IR[5:4]] <= EX_WB_ALU_OUT; // Write back to register file
+        end
+    end
+
+    // Initialize memory (example instructions)
+    initial begin
+        instruction_memory[0] = 8'b00010001; // ADD R0, R1
+        instruction_memory[1] = 8'b01010010; // SUB R1, R2
+        instruction_memory[2] = 8'b10010011; // LOAD R1, [R3]
+        data_memory[3] = 8'hFF; // Memory data
+        register_file[0] = 8'h01; // Register R0
+        register_file[1] = 8'h02; // Register R1
+        register_file[2] = 8'h03; // Register R2
+        register_file[3] = 8'h03; // Register R3
+    end
+endmodule
