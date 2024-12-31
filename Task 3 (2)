@@ -1,0 +1,38 @@
+/* Pipelined Processor test bench */
+
+module PipelinedProcessor_tb;
+
+    // Clock and reset
+    reg clk, reset;
+    wire [7:0] result;
+
+    // Instantiate the processor
+    PipelinedProcessor uut (
+        .clk(clk),
+        .reset(reset),
+        .result(result)
+    );
+
+    // Clock generation
+    always #5 clk = ~clk;
+
+    // Test sequence
+    initial begin
+        // Initialize signals
+        clk = 0;
+        reset = 1;
+
+        // Release reset
+        #10 reset = 0;
+
+        // Wait for a few clock cycles
+        #100 $finish;
+    end
+
+    // Monitor signals
+    initial begin
+      $dumpvars(1);
+      $dumpfile("dump.vcd");
+        $monitor("Time=%0d, Result=%h", $time, result);
+    end
+endmodule
